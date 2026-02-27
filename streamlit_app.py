@@ -1,76 +1,113 @@
-with tabs[3]:
-    st.subheader("DO")
+import streamlit as st
 
-    # 1) LIGNES FIXES (pas soulignées -> dans la note automatiquement)
-    do_fixed = [
+st.set_page_config(page_title="DO Note Generator", layout="wide")
+st.title("DO")
+
+# -----------------------
+# Helpers
+# -----------------------
+def chip(label: str, options: list[str], key: str, index: int = 0):
+    return st.radio(label, options, horizontal=True, key=key, index=index)
+
+def render_do_note():
+    lines = [
+        "DO",
         "Confirmation du plan de tx avec le patient, questions répondues",
-        "Etch",
-        "Gluma",
-        "Ablation excès, occlusion, polissage, soie",
+    ]
+
+    # 🔴 Open ended
+    lines.append(f"# dent: {st.session_state.get('dent','')}")
+    lines.append(f"Confirmation dx: {st.session_state.get('confirm_dx','')}")
+
+    # 🔵 Choices
+    lines.append(f"Cause: {st.session_state.get('cause','')}")
+    lines.append(f"Ablation: {st.session_state.get('ablation','')}")
+    lines.append(f"Isolation: {st.session_state.get('isolation','')}")
+    lines.append(f"Système matrice: {st.session_state.get('matrice','')}")
+    lines.append(f"Liner: {st.session_state.get('liner','')}")
+    lines.append(f"Base: {st.session_state.get('base','')}")
+    
+    # ⚫ Fixed text (not blue, not red)
+    lines.append("Etch")
+    lines.append("Gluma")
+
+    # 🔵 Choices
+    lines.append(f"Adhésif: {st.session_state.get('adhesif','')}")
+    lines.append(f"Matériel: {st.session_state.get('materiel','')}")
+    lines.append(f"Couleur: {st.session_state.get('couleur','')}")
+
+    # ⚫ Fixed
+    lines.append("Ablation excès, occlusion, polissage, soie")
+
+    # 🔴 Open ended
+    lines.append(f"Détails à noter: {st.session_state.get('details','')}")
+
+    # ⚫ Fixed
+    lines.extend([
         "Risque de sensibilité temporaire expliqué au patient",
         "Risque d’endo car carie profonde expliqué au patient",
         "Patient comprend",
-        "Patient comfortable",
+        "Patient confortable",
         "Questions du patient répondues",
-    ]
+    ])
 
-    # 2) SEULEMENT LES CHOIX (soulignés) + champs libres utiles
-    field_number("# dent:", key="do_dent")
-    field_text("Confirmation dx:", key="do_confirm_dx")
+    # 🔴 Open ended
+    lines.append(f"PRV: {st.session_state.get('prv','')}")
 
-    chip_single("Cause:", ["restauration défectueuse", "carie"], key="do_cause", index=0)
+    return "\n".join(lines)
 
-    chip_single(
-        "Ablation:",
-        ["totale", "partielle jusqu’à consistance cuire (proximité pulpaire)"],
-        key="do_ablation",
-        index=0,
-    )
 
-    chip_single("Isolation:", ["coton + dry-angle", "digue", "svédoptère"], key="do_isolation", index=0)
+# =====================================================
+# UI (ONLY DO)
+# =====================================================
 
-    chip_single(
-        "Système matrice:",
-        ["sectionnelle + coin de bois", "tofflemire + coin de bois"],
-        key="do_matrice",
-        index=0,
-    )
+# 🔴 Open-ended fields
+st.number_input("# dent:", min_value=1, max_value=32, step=1, key="dent")
+st.text_input("Confirmation dx:", key="confirm_dx")
 
-    chip_single("Liner:", ["ionoseal", "dycal", "calcimol"], key="do_liner", index=0)
-    chip_single("Base:", ["vitrebond", "fuji 2 LC"], key="do_base", index=0)
+# 🔵 Blue = chips
+chip("Cause:", ["restauration défectueuse", "carie"], key="cause")
 
-    chip_single("Adhésif:", ["optibond", "all-bond"], key="do_adhesif", index=0)
+chip(
+    "Ablation:",
+    ["totale", "partielle jusqu’à consistance cuire (proximité pulpaire)"],
+    key="ablation",
+)
 
-    chip_single(
-        "Matériel:",
-        ["amalgame", "composite filtek supreme", "composite spectra", "fuji 2LC"],
-        key="do_materiel",
-        index=0,
-    )
+chip(
+    "Isolation:",
+    ["coton + dry-angle", "digue", "svédoptère"],
+    key="isolation",
+)
 
-    chip_single("Couleur:", ["A1", "A2", "A3"], key="do_couleur", index=0)
+chip(
+    "Système matrice:",
+    ["sectionnelle + coin de bois", "tofflemire + coin de bois"],
+    key="matrice",
+)
 
-    field_text("Détails à noter:", key="do_details", height=120)
-    field_text("PRV:", key="do_prv")
+chip("Liner:", ["ionoseal", "dycal", "calcimol"], key="liner")
 
-    # 3) NOTE SOUS LA SECTION
-    note = render_section(
-        "DO",
-        fixed_lines=do_fixed,
-        kv_lines=[
-            ("# dent:", "do_dent"),
-            ("Confirmation dx:", "do_confirm_dx"),
-            ("Cause:", "do_cause"),
-            ("Ablation:", "do_ablation"),
-            ("Isolation:", "do_isolation"),
-            ("Système matrice:", "do_matrice"),
-            ("Liner:", "do_liner"),
-            ("Base:", "do_base"),
-            ("Adhésif:", "do_adhesif"),
-            ("Matériel:", "do_materiel"),
-            ("Couleur:", "do_couleur"),
-            ("Détails à noter:", "do_details"),
-            ("PRV:", "do_prv"),
-        ],
-    )
-    note_box("DO", note)
+chip("Base:", ["vitrebond", "fuji 2 LC"], key="base")
+
+chip("Adhésif:", ["optibond", "all-bond"], key="adhesif")
+
+chip(
+    "Matériel:",
+    ["amalgame", "composite filtek supreme", "composite spectra", "fuji 2LC"],
+    key="materiel",
+)
+
+chip("Couleur:", ["A1", "A2", "A3"], key="couleur")
+
+# 🔴 Open-ended
+st.text_area("Détails à noter:", key="details", height=120)
+st.text_input("PRV:", key="prv")
+
+# =====================================================
+# NOTE OUTPUT (UNDER SECTION)
+# =====================================================
+
+st.divider()
+st.subheader("Note générée")
+st.text_area("", render_do_note(), height=500)
